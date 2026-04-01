@@ -1,11 +1,17 @@
 import { useState } from "react";
 
 export default function Encrypt() {
+  const [showAES, setShowAES] = useState(false);
+
   const [password, setPassword] = useState("");
   const [strength, setStrength] = useState(0);
   const [masterKey, setMasterKey] = useState("");
+  const [email, setEmail] = useState("");
   const [fileError, setFileError] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  /* 🔹 ADDED STATE (does not affect existing code) */
+  const [isDragging, setIsDragging] = useState(false);
 
   const calculateStrength = (pwd: string) => {
     let score = 0;
@@ -29,12 +35,17 @@ export default function Encrypt() {
     setStrength(calculateStrength(val));
   };
 
+  /* 🔹 ORIGINAL FILE VALIDATION (unchanged) */
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ["application/pdf","image/jpeg","image/jpg","image/png"];
-
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+    ];
     if (!allowedTypes.includes(file.type)) {
       setFileError("⚠️ Only PDF, JPG, JPEG, and PNG files are allowed.");
       setSelectedFile(null);
@@ -46,15 +57,51 @@ export default function Encrypt() {
     setSelectedFile(file);
   };
 
+  /* 🔹 DRAG & DROP HANDLERS (NEW, SAFE ADDITION) */
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => setIsDragging(false);
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      setFileError("⚠️ Only PDF, JPG, JPEG, and PNG files are allowed.");
+      setSelectedFile(null);
+      return;
+    }
+
+    setFileError("");
+    setSelectedFile(file);
+  };
+
   const handleEncrypt = async () => {
-    if (!selectedFile) { alert("⚠️ Please upload a valid file."); return; }
-    if (strength < 100) { alert("⚠️ Password too weak."); return; }
-    if (!masterKey || masterKey.length < 6) { alert("❌ Master Key required (min 6 chars)."); return; }
+    setShowAES(true);
+    if (!selectedFile) return alert("⚠️ Please upload a file.");
+    if (strength < 100) return alert("⚠️ Password too weak.");
+    if (!masterKey || masterKey.length < 6)
+      return alert("❌ Master Key required (min 6 chars).");
+    if (!email || !/\S+@\S+\.\S+/.test(email))
+      return alert("❌ Valid email required to receive Master Key.");
 
     const formData = new FormData();
     formData.append("file", selectedFile);
     formData.append("password", password);
     formData.append("masterKey", masterKey);
+    formData.append("email", email);
 
     try {
       const res = await fetch("http://localhost:5000/encrypt", {
@@ -76,205 +123,313 @@ export default function Encrypt() {
       a.click();
       window.URL.revokeObjectURL(url);
 
-      alert("🎉 File encrypted and downloaded successfully!");
+      alert("🎉 File encrypted, downloaded, and Master Key emailed successfully!");
+      setPassword("");
+      setMasterKey("");
+      setEmail("");
+      setSelectedFile(null);
+      setStrength(0);
     } catch (err) {
-      console.error(err);
-      alert("❌ Encryption failed.");
+      alert("❌ Encryption failed. Check if backend server is running.");
     }
   };
 
   return (
     <>
-      <div className="card animate-fadeUp">
-        <h2>Encrypt Your File 🔐</h2>
-        <div className="warning">File like PDF, JPG, JPEG, PNG are only allowed</div>
+     <style>{`
+:root {
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --primary-color: #16a085;
+  --accent-color: #16a085;
+  --accent-color-hover: #138d75;
+  --text-color: #064e3b;
+  --shadow-color: rgba(0, 0, 0, 0.15);
+  --note-green: #10b981;
+  --transition-speed: 0.3s;
+  --input-border: #d1d5db;
+}
 
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background-color: #f0fdf4;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Floating icons background */
+.floating-icons {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.floating-icons i {
+  position: absolute;
+  font-size: 30px;
+  color: rgba(22,160,133,0.3);
+  animation: floatUp linear infinite;
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.4; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(-50px) rotate(360deg); opacity: 0; }
+}
+
+.card {
+  position: relative;
+  width: 600px;
+  max-width: 95%;
+  padding: 3.5rem 3rem;
+  border-radius: 18px;
+  background-color: var(--card-bg);
+  box-shadow: 0 10px 40px var(--shadow-color);
+  margin: 2rem auto;
+  transition: transform var(--transition-speed), box-shadow var(--transition-speed);
+  backdrop-filter: blur(8px);
+  animation: fadeInUp 1s ease forwards;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.top-note {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  background-color: rgba(16, 185, 129, 0.15);
+  color: var(--primary-color);
+  border-left: 6px solid var(--primary-color);
+  border-radius: 10px;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 15px 50px var(--shadow-color);
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 60px;
+  height: 60px;
+  background: url('/lock.gif') no-repeat center center;
+  background-size: contain;
+  animation: floatLock 3s ease-in-out infinite;
+}
+
+@keyframes floatLock {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-5px) rotate(-5deg); }
+  50% { transform: translateY(-10px) rotate(5deg); }
+  75% { transform: translateY(-5px) rotate(-5deg); }
+}
+
+@keyframes fadeInDown {0% {opacity:0; transform:translateY(-20px);}100% {opacity:1; transform:translateY(0);} }
+@keyframes fadeInUp {0% {opacity:0; transform:translateY(20px);}100% {opacity:1; transform:translateY(0);} }
+
+.card h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: var(--primary-color);
+  text-shadow: 1px 1px 4px rgba(0,0,0,0.1);
+}
+
+.note {
+  background-color: var(--note-green);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.warning {
+  background-color: rgba(220, 38, 38, 0.15);
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+input {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--input-border);
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 12px rgba(16,185,129,0.3);
+}
+
+.btn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--accent-color);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.btn:hover {
+  background-color: var(--accent-color-hover);
+  transform: scale(1.05);
+}
+
+.strength-bar {
+  height: 10px;
+  width: 100%;
+  background: rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+}
+
+.strength-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 8px;
+  transition: width 0.5s ease, background-color 0.5s ease;
+  background-color: var(--accent-color);
+}
+
+.strength-label {
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  color: var(--text-color);
+  text-align: center;
+}
+
+.master-key-label {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: var(--primary-color);
+}
+      `}</style>
+      <div className="floating-icons">
+        <i style={{ left: "10%", animationDuration: "12s" }}>🔒</i>
+        <i style={{ left: "25%", animationDuration: "15s", fontSize: "35px" }}>🔑</i>
+        <i style={{ left: "50%", animationDuration: "18s", fontSize: "28px" }}>🔒</i>
+        <i style={{ left: "70%", animationDuration: "14s", fontSize: "32px" }}>🔑</i>
+        <i style={{ left: "85%", animationDuration: "16s", fontSize: "30px" }}>🔒</i>
+      </div>
+
+      <div className="card">
+        <div className="top-note">
+          ⚠️ Always keep your Master Key secure. Files encrypted without the correct
+          Master Key cannot be decrypted.
+        </div>
+
+        <h2>Encrypt Your File 🔐</h2>
+
+        <div className="note">File types allowed: PDF, JPG, JPEG, PNG</div>
+
+        {/* 🔹 DRAG & DROP ZONE (ADDED, NO CSS CHANGE) */}
+        <div
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          style={{
+            border: isDragging
+              ? "2px dashed #16a085"
+              : "2px dashed #a7f3d0",
+            padding: "1.4rem",
+            borderRadius: "12px",
+            textAlign: "center",
+            marginBottom: "1rem",
+            fontWeight: "bold",
+            color: "#065f46",
+          }}
+        >
+          {selectedFile
+            ? `📄 ${selectedFile.name}`
+            : "📥 Drag & Drop your file here"}
+        </div>
+
+        {/* 🔹 ORIGINAL INPUT (UNCHANGED) */}
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={handleFileChange}
+        />
+
         {fileError && <div className="warning">{fileError}</div>}
 
         <div className="note">Enter Encryption Password</div>
-        <input type="password" value={password} onChange={handlePasswordChange} placeholder="Encryption password" />
+        <input
+          type="password"
+          value={password}
+          onChange={handlePasswordChange}
+          placeholder="Strong password"
+        />
+
         <div className="strength-bar">
-          <div className="strength-fill" style={{
-            width:`${strength}%`,
-            backgroundColor: strength<50?"#f87171":strength<100?"#facc15":"#16a085"
-          }}></div>
+          <div
+            className="strength-fill"
+            style={{
+              width: `${strength}%`,
+              backgroundColor:
+                strength < 50
+                  ? "#f87171"
+                  : strength < 100
+                  ? "#facc15"
+                  : "#16a085",
+            }}
+          />
         </div>
-        <div className="strength-label">{password && `Password Strength: ${getStrengthLabel(strength)}`}</div>
 
-        <div className="warning">MASTER KEY (Required)</div>
-        <input type="password" value={masterKey} onChange={(e)=>setMasterKey(e.target.value)} placeholder="Master Key" />
+        <div className="strength-label">
+          {password && `Password Strength: ${getStrengthLabel(strength)}`}
+        </div>
 
-        <button className="btn" onClick={handleEncrypt}>Encrypt Now</button>
+        <div className="master-key-label">Master Key (Required)</div>
+        <input
+          type="password"
+          value={masterKey}
+          onChange={(e) => setMasterKey(e.target.value)}
+          placeholder="Min 6 characters"
+        />
+
+        <div className="master-key-label">Your Email (Required)</div>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Enter your email to receive Master Key"
+        />
+
+        <button className="btn" onClick={handleEncrypt}>
+          Encrypt Now
+        </button>
       </div>
-
-      <style>{`
-        .card {
-          width:500px; padding:2.5rem; border-radius:12px;
-          background-color: rgba(255,255,255,0.85);
-          box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-          margin:3rem auto;
-        }
-        h2 { text-align:center; margin-bottom:1rem; color:#2c3e50; }
-        .note { background-color:#d1fae5; color:#065f46; padding:0.6rem 1rem; border-radius:8px; margin-bottom:0.75rem; font-weight:bold; }
-        .warning { background-color:#fee2e2; color:#b91c1c; padding:0.6rem 1rem; border-radius:8px; margin-bottom:0.75rem; font-weight:bold; }
-        input { width:100%; padding:0.8rem 1rem; border-radius:8px; border:1px solid #d1d5db; margin-bottom:1rem; font-size:1rem; }
-        input:focus { outline:none; border-color:#16a085; box-shadow:0 0 8px #16a08550; }
-        .btn { width:100%; padding:0.8rem; border:none; border-radius:8px; background-color:#16a085; color:#fff; font-weight:bold; cursor:pointer; transition:0.3s; }
-        .btn:hover { background-color:#138d75; transform:scale(1.03); }
-        .strength-bar { height:8px; width:100%; background:#e5e7eb; border-radius:8px; margin-bottom:0.5rem; }
-        .strength-fill { height:100%; border-radius:8px; transition: width 0.5s, background-color 0.5s; }
-        .strength-label { margin-bottom:0.75rem; font-weight:bold; color:#374151; }
-      `}</style>
-      <style>{`
-        :root {
-          --card-bg: rgba(255,255,255,0.85);
-          --primary-color: #2c3e50;
-          --accent-color: #16a085;
-          --text-color: #1f2937;
-          --shadow-color: rgba(0,0,0,0.1);
-          --transition-speed: 0.3s;
-          --warning-red: #f87171;
-          --note-yellow: #facc15;
-        }
-
-        body {
-          margin: 0;
-          font-family: 'Poppins', sans-serif;
-          background-color: #f0f4f8;
-          overflow-x: hidden;
-          position: relative;
-          color: var(--text-color);
-        }
-
-        main {
-          padding: 2rem 1.5rem;
-          max-width: 1100px;
-          margin: 0 auto;
-          position: relative;
-          z-index: 1;
-        }
-
-        .animate-fadeUp {
-          animation: fadeUp 0.6s ease forwards;
-        }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .floating-icon {
-          position: absolute;
-          font-size: 2.5rem;
-          opacity: 0.35;
-          color: var(--accent-color);
-          text-shadow: 0 0 8px rgba(22,160,133,0.7);
-          animation: float 18s linear infinite;
-        }
-
-        @keyframes float {
-          0% { transform: translateY(100vh) translateX(0); }
-          50% { transform: translateY(50vh) translateX(30px); }
-          100% { transform: translateY(-10vh) translateX(-30px); }
-        }
-
-        .site-card {
-          background-color: var(--card-bg);
-          border-radius: 12px;
-          padding: 2rem;
-          box-shadow: 0 6px 20px var(--shadow-color);
-          transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
-          margin-bottom: 2rem;
-        }
-
-        .site-card:hover {
-          transform: translateY(-4px) scale(1.02);
-          box-shadow: 0 12px 24px var(--shadow-color);
-        }
-
-        .site-input {
-          width: 100%;
-          padding: 0.85rem 1rem;
-          border-radius: 12px;
-          border: 1px solid #d1d5db;
-          margin-bottom: 0.75rem;
-          font-size: 1rem;
-          transition: border var(--transition-speed), box-shadow var(--transition-speed);
-        }
-
-        .site-input:focus {
-          outline: none;
-          border-color: var(--accent-color);
-          box-shadow: 0 0 12px var(--accent-color);
-        }
-
-        .site-btn {
-          background-color: var(--accent-color);
-          color: #fff;
-          padding: 0.85rem 1.5rem;
-          border-radius: 12px;
-          font-weight: bold;
-          cursor: pointer;
-          font-size: 1rem;
-          width: 100%;
-          transition: transform var(--transition-speed), background-color var(--transition-speed), box-shadow var(--transition-speed);
-        }
-
-        .site-btn:hover {
-          background-color: #138d75;
-          transform: scale(1.05);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-
-        .warning {
-          background-color: #fef3c7;
-          color: #92400e;
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          font-weight: bold;
-        }
-
-        .note {
-          background-color: #d1fae5;
-          color: #065f46;
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          margin-bottom: 1rem;
-          font-weight: bold;
-        }
-
-        .strength-bar {
-          height: 8px;
-          width: 100%;
-          background-color: #e5e7eb;
-          border-radius: 8px;
-          margin-bottom: 0.25rem;
-          overflow: hidden;
-        }
-
-        .strength-fill {
-          height: 100%;
-          width: 0%;
-          border-radius: 8px;
-          transition: width 0.5s ease, background-color 0.5s ease;
-        }
-
-        .strength-label {
-          font-size: 0.9rem;
-          margin-bottom: 0.75rem;
-          font-weight: bold;
-          color: #374151;
-        }
-
-        .master-key-label {
-          font-size: 0.95rem;
-          margin: 0.25rem 0;
-          font-weight: bold;
-          color: #374151;
-        }
-      `}</style>
     </>
   );
 }

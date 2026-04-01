@@ -274,10 +274,10 @@ export default function Home() {
                 <li>Study common security issues related to PDF & image files.</li>
                 <li>Analyze existing encryption tools & their limitations.</li>
                 <li>Implement encryption/decryption with AES security.</li>
-                <li>Password protection with secure hashed storage.</li>
+                <li>Password protection with secure JSON storage.</li>
                 <li>Attempt lock mechanism after multiple failed password attempts.</li>
                 <li>Track incorrect password attempts per file.</li>
-                <li>Master key recovery for authorized admin access.</li>
+                <li>Master key recovery via mail.</li>
                 <li>Design a user-friendly interface for file selection & password input.</li>
                 <li>Visual animations demonstrate encryption/decryption processes.</li>
                 <li>Enhanced security ensures confidentiality, integrity, and controlled access.</li>
