@@ -1,73 +1,149 @@
-# React + TypeScript + Vite
+# 🔐 Encryption-Decryption System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A secure web-based application that allows users to encrypt and decrypt files using a password and a custom master key. Built with a modern React frontend and a Python backend, this system ensures data confidentiality and controlled access.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+* 🔒 File Encryption (PDF, JPG, PNG, etc.)
+* 🔓 File Decryption using Password + Master Key
+* 🧠 Dual Security Layer (User Password + Master Key)
+* 📤 File Upload & Processing
+* ⚡ Real-time Encryption/Decryption Handling
+* 🖥️ Interactive UI (React-based)
+* 🛡️ Secure Data Handling
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🧰 Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+* **Frontend:** React (TSX), HTML, CSS
+* **Backend:** Python (Flask / FastAPI)
+* **Security:** Custom Encryption Logic
+* **File Handling:** Python File I/O
+* **Deployment Ready:** Vercel (Frontend) + Backend Server
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+---
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 📁 Project Structure
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```id="enc1"
+encryption-decryption/
+│
+├── frontend/              # React App
+│   ├── src/
+│   ├── public/
+│   └── package.json
+│
+├── backend/               # Python Backend
+│   ├── app.py / main.py
+│   ├── encryption.py
+│   ├── requirements.txt
+│
+├── uploads/               # Uploaded files
+├── encrypted_files/       # Encrypted outputs
+├── decrypted_files/       # Decrypted outputs
+│
+└── README.md
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## ⚙️ Setup Instructions
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 🟢 1. Clone Repository
+
+```bash
+git clone https://github.com/yourusername/encryption-decryption.git
+cd encryption-decryption
 ```
+
+---
+
+### 🟢 2. Backend Setup (Python)
+
+```bash
+cd backend
+pip install -r requirements.txt
+python app.py
+```
+
+👉 Server runs on:
+
+```
+http://localhost:5000
+```
+
+---
+
+### 🟢 3. Frontend Setup (React)
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+👉 App runs on:
+
+```
+http://localhost:3000
+```
+
+---
+
+## 🔐 How It Works
+
+1. User uploads a file
+2. Enters:
+
+   * Password
+   * Master Key
+3. File gets encrypted using custom algorithm
+4. For decryption:
+
+   * Same password + master key required
+
+---
+
+## ⚠️ Security Notes
+
+* Do not expose encryption keys publicly
+* Avoid uploading sensitive real-world data
+* Backend should be secured before production deployment
+
+---
+
+## 📸 Screenshots
+
+<img width="1898" height="920" alt="image" src="https://github.com/user-attachments/assets/5085155f-b576-4a7e-9cf8-ed32a34c1c61" />
+
+* Upload Interface
+* Encryption Process
+* Decryption Output
+
+---
+
+## 📌 Future Enhancements
+
+* AES / Advanced Encryption Integration
+* Drag & Drop File Upload
+* Progress Loader & Animations
+* Cloud Storage Integration
+* User Authentication System
+
+---
+
+## 👨‍💻 Authors
+
+* Ayush Vyas
+* Aarchi Patel
+
+---
+
+## ⭐ Support
+
+If you found this project useful, give it a ⭐ on GitHub!
+
+---
