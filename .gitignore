@@ -1,4 +1,31 @@
-node_modules
-dist
-build
+# Node / React
+node_modules/
+dist/
+build/
+
+# Environment variables
 .env
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# File uploads / outputs
+uploads/
+encrypted_files/
+decrypted_files/
+
+# Temporary files
+temp/
